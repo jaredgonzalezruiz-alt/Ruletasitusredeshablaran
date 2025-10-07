@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ruleta Twister</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to top, #87CEEB, #4169E1);
+            color: #ffffff;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .pixel-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden;
+        }
+        .pixel-background .pixel {
+            position: absolute; display: block; list-style: none; background: rgba(255, 255, 255, 0.2); animation: animate-pixels 20s linear infinite; bottom: -200px;
+        }
+        .pixel-background .pixel:nth-child(1) { left: 10%; width: 50px; height: 50px; animation-delay: 0s; animation-duration: 15s; }
+        .pixel-background .pixel:nth-child(2) { left: 20%; width: 20px; height: 20px; animation-delay: 1s; animation-duration: 10s; }
+        .pixel-background .pixel:nth-child(3) { left: 25%; width: 10px; height: 10px; animation-delay: 3s; animation-duration: 18s; }
+        .pixel-background .pixel:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 12s; }
+        .pixel-background .pixel:nth-child(5) { left: 50%; width: 25px; height: 25px; animation-delay: 2s; animation-duration: 9s; }
+        .pixel-background .pixel:nth-child(6) { left: 65%; width: 80px; height: 80px; animation-delay: 0s; animation-duration: 14s; }
+        .pixel-background .pixel:nth-child(7) { left: 75%; width: 30px; height: 30px; animation-delay: 1s; animation-duration: 20s; }
+        .pixel-background .pixel:nth-child(8) { left: 85%; width: 15px; height: 15px; animation-delay: 4s; animation-duration: 8s; }
+        .pixel-background .pixel:nth-child(9) { left: 55%; width: 40px; height: 40px; animation-delay: 5s; animation-duration: 16s; }
+        .pixel-background .pixel:nth-child(10) { left: 5%; width: 10px; height: 10px; animation-delay: 8s; animation-duration: 22s; }
+        .pixel-background .pixel:nth-child(11) { left: 90%; width: 50px; height: 50px; animation-delay: 6s; animation-duration: 11s; }
+        .pixel-background .pixel:nth-child(12) { left: 30%; width: 20px; height: 20px; animation-delay: 9s; animation-duration: 13s; }
+        @keyframes animate-pixels {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+        }
+        .social-emoji {
+            position: absolute; display: block; list-style: none; color: white; text-shadow: 0 0 8px rgba(0,0,0,0.5); user-select: none; animation-timing-function: linear; animation-iteration-count: infinite;
+        }
+        @keyframes animate-from-left {
+            0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(120vw) rotate(720deg); opacity: 0; }
+        }
+        @keyframes animate-from-right {
+            0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(-120vw) rotate(720deg); opacity: 0; }
+        }
+        @property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+        @keyframes spin-colors-slow-down { from { --angle: 0deg; } to { --angle: 1440deg; } }
+        .outer-circle.spinning { animation: spin-colors-slow-down 4s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes spin-inner-slow-down { from { transform: rotate(0deg); } to { transform: rotate(-1440deg); } }
+        .inner-circle.spinning { animation: spin-inner-slow-down 4s cubic-bezier(0.22, 1, 0.36, 1); }
+        .roulette-container {
+            width: 90vw; height: 90vw; max-width: 450px; max-height: 450px; position: relative; z-index: 1; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 0 30px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(0, 0, 0, 0.5); transition: box-shadow 0.5s ease-in-out;
+        }
+        .inner-circle {
+            width: 50%; height: 50%; background: #f0f0f0; border-radius: 50%; position: relative; border: 5px solid #fff; overflow: hidden; box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        }
+        .outer-circle {
+            width: 100%; height: 100%; border-radius: 50%; position: absolute; border: 10px solid #fff; box-shadow: inset 0 0 20px rgba(0,0,0,0.4); --angle: 0deg; background: conic-gradient(from var(--angle), #f87171 0deg 60deg, #f472b6 60deg 120deg, #fb923c 120deg 180deg, #facc15 180deg 240deg, #a78bfa 240deg 300deg, #60a5fa 300deg 360deg);
+        }
+        .body-part { position: absolute; width: 50%; height: 50%; display: flex; justify-content: center; align-items: center; }
+        .body-part img { width: 70%; height: 70%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3)); transition: opacity 0.3s; }
+        .body-part .flipped { transform: scaleX(-1); }
+        .pie-derecho-rojo-quadrant { top: 0; left: 0; background-color: #f87171; }
+        .mano-izquierda-verde-quadrant { top: 0; right: 0; background-color: #34d399; }
+        .pie-izquierdo-azul-quadrant { bottom: 0; right: 0; background-color: #60a5fa; }
+        .mano-derecha-amarillo-quadrant { bottom: 0; left: 0; background-color: #facc15; }
+        .emoji-item { position: absolute; width: 16.66%; height: 50%; top: 0; left: 41.67%; transform-origin: bottom center; }
+        .emoji-item img { width: 60%; max-width: 50px; position: absolute; top: 15%; left: 50%; transition: opacity 0.3s; filter: drop-shadow(0 3px 3px rgba(0,0,0,0.3)); }
+        .arrow { position: absolute; z-index: 10; left: 50%; bottom: 50%; transform-origin: bottom center; transition: transform 5s cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0px 3px 4px rgba(0,0,0,0.5)); clip-path: polygon(50% 0, 85% 12%, 58% 12%, 58% 100%, 42% 100%, 42% 12%, 15% 12%); }
+        .outer-arrow { height: 38%; width: 30px; margin-left: -15px; background-color: #555555; }
+        .inner-arrow { height: 16%; width: 26px; margin-left: -13px; background-color: #666666; }
+        .center-pin { position: absolute; width: 15px; height: 15px; background: #4a4a4a; border-radius: 50%; border: 2px solid white; z-index: 11; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 5px rgba(0,0,0,0.5); }
+        .action-button { z-index: 1; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 700; color: white; background: linear-gradient(135deg, #ff7e5f, #feb47b); border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; }
+        @media (min-width: 640px) { .action-button { padding: 1rem 2.5rem; font-size: 1.25rem; } }
+        .action-button:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
+        .action-button:disabled { background: #999; cursor: not-allowed; opacity: 0.7; }
+        #result-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: none; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .result-image { position: absolute; width: 120px; height: 120px; background-color: rgba(255, 255, 255, 0.1); border-radius: 50%; padding: 15px; box-shadow: 0 0 30px rgba(0,0,0,0.7); border: 3px solid rgba(255,255,255,0.3); transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @media (min-width: 640px) { .result-image { width: 180px; height: 180px; padding: 20px; } }
+        .result-text-container { position: relative; margin-top: 180px; opacity: 0; transform: translateY(30px); transition: opacity 0.5s 0.5s ease, transform 0.5s 0.5s ease; text-align: center; }
+         @media (min-width: 640px) { .result-text-container { margin-top: 250px; } }
+        #close-result-button { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); font-size: 3rem; font-weight: bold; color: white; cursor: pointer; pointer-events: all; text-shadow: 0 0 10px black; }
+        #mute-button { position: fixed; top: 1rem; right: 1rem; z-index: 101; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.5); border-radius: 50%; width: 45px; height: 45px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        @media (min-width: 640px) { #mute-button { top: 1.25rem; right: 1.25rem; width: 50px; height: 50px; } }
+        #mute-button svg { width: 24px; height: 24px; fill: white; }
+        #mute-icon-off { display: none; }
+        #registration-form input { background-color: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.5); color: white; }
+        #registration-form input::placeholder { color: rgba(255, 255, 255, 0.7); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+
+    <div class="pixel-background">
+        <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div>
+        <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div>
+        <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div> <div class="pixel"></div>
+    </div>
+    
+    <button id="mute-button" title="Silenciar Sonido">
+        <svg id="mute-icon-on" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+        <svg id="mute-icon-off" viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path></svg>
+    </button>
+    
+    <main class="w-full flex-grow flex items-center justify-center p-4">
+        <!-- Registration Screen -->
+        <div id="registration-screen" class="hidden relative w-full max-w-md p-6 sm:p-8 bg-black/20 backdrop-blur-md rounded-2xl shadow-2xl z-20">
+            <h1 class="text-2xl sm:text-3xl font-bold text-center mb-2">Registro</h1>
+            <p class="text-center mb-6 text-sm sm:text-base">Completa tus datos para poder jugar.</p>
+            <form id="registration-form" class="space-y-4">
+                <div>
+                    <label for="nombre" class="block mb-1 font-semibold text-sm">Nombre completo <span class="text-red-400">*</span></label>
+                    <input type="text" id="nombre" name="nombre" class="w-full p-2 rounded-lg text-base" placeholder="Tu nombre completo" required>
+                </div>
+                <div>
+                    <label for="correo" class="block mb-1 font-semibold text-sm">Correo electrónico <span class="text-red-400">*</span></label>
+                    <input type="email" id="correo" name="correo" class="w-full p-2 rounded-lg text-base" placeholder="tu@correo.com" required>
+                </div>
+                <div>
+                    <label for="ciudad" class="block mb-1 font-semibold text-sm">Ciudad <span class="text-red-400">*</span></label>
+                    <input type="text" id="ciudad" name="ciudad" class="w-full p-2 rounded-lg text-base" placeholder="Ciudad de residencia" required>
+                </div>
+                <div>
+                    <label for="telefono" class="block mb-1 font-semibold text-sm">Teléfono (Opcional)</label>
+                    <input type="tel" id="telefono" name="telefono" class="w-full p-2 rounded-lg text-base" placeholder="Tu número de teléfono">
+                </div>
+                <div>
+                    <label for="organismo" class="block mb-1 font-semibold text-sm">Escuela / Empresa (Opcional)</label>
+                    <input type="text" id="organismo" name="organismo" class="w-full p-2 rounded-lg text-base" placeholder="Nombre de la organización">
+                </div>
+                <button type="submit" id="register-button" class="action-button w-full !mt-6">Registrarme y Jugar</button>
+            </form>
+            <div id="form-message" class="text-center mt-4 h-5 text-sm"></div>
+        </div>
+
+        <!-- Menu Screen (Starts hidden) -->
+        <div id="menu-screen" class="hidden relative w-full h-full flex flex-col items-center justify-center text-center z-10">
+            <div class="flex flex-col items-center mb-8 sm:mb-12">
+                <img src="https://images4.imagebam.com/5a/d1/07/ME164JSV_o.png" alt="Ruleta Twister" class="w-4/5 sm:w-3/4 max-w-md" style="filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
+                <img src="https://images4.imagebam.com/ed/86/b9/ME1666GW_o.png" alt="Marca de agua" class="w-16 sm:w-20 mt-4 pointer-events-none" style="filter: brightness(0) invert(1) drop-shadow(0 2px 3px rgba(0,0,0,0.3));">
+            </div>
+            <button id="play-button" class="action-button text-lg sm:text-2xl px-10 sm:px-16">Jugar</button>
+        </div>
+
+        <!-- Game Screen (Starts hidden) -->
+        <div id="game-screen" class="hidden w-full h-full flex flex-col items-center justify-center relative space-y-4 sm:space-y-8">
+            <button id="back-button" class="absolute top-4 left-4 sm:top-5 sm:left-5 z-20 bg-white/20 text-white font-bold py-2 px-4 rounded-full backdrop-blur-sm hover:bg-white/30 transition text-sm">&larr; Menú</button>
+            <img src="https://images4.imagebam.com/5a/d1/07/ME164JSV_o.png" alt="Ruleta Twister" class="w-1/2 max-w-xs sm:max-w-sm z-10" style="filter: brightness(0) invert(1) drop-shadow(0 4px 6px rgba(0,0,0,0.4));">
+            <div class="roulette-container">
+                <div class="outer-circle"></div>
+                <div class="inner-circle">
+                    <div class="body-part pie-derecho-rojo-quadrant"><img src="https://images4.imagebam.com/be/ac/80/ME164JF1_o.png" alt="Pie Derecho" onerror="this.src='https://placehold.co/80x80/f87171/ffffff?text=?'"></div>
+                    <div class="body-part mano-izquierda-verde-quadrant"><img src="https://images4.imagebam.com/3f/3b/a3/ME164JJ0_o.png" alt="Mano Izquierda" onerror="this.src='https://placehold.co/80x80/34d399/ffffff?text=?'"></div>
+                    <div class="body-part mano-derecha-amarillo-quadrant"><img src="https://images4.imagebam.com/3f/3b/a3/ME164JJ0_o.png" alt="Mano Derecha" class="flipped" onerror="this.src='https://placehold.co/80x80/facc15/ffffff?text=?'"></div>
+                    <div class="body-part pie-izquierdo-azul-quadrant"><img src="https://images4.imagebam.com/89/de/db/ME164JHN_o.png" alt="Pie Izquierdo" onerror="this.src='https://placehold.co/80x80/60a5fa/ffffff?text=?'"></div>
+                </div>
+                <div class="arrow outer-arrow"></div>
+                <div class="arrow inner-arrow"></div>
+                <div class="center-pin"></div>
+            </div>
+            <button id="spin-button" class="action-button">Girar</button>
+        </div>
+    </main>
+
+    <div id="result-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONSTANTES Y ELEMENTOS DEL DOM ---
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxw_umxfy47Tp9O-TT_314_5rusimfb1zgqUi0l54F3IRrZKH0XZdsFgfojRrPBPQD1EQ/exec';
+
+            const registrationScreen = document.getElementById('registration-screen');
+            const registrationForm = document.getElementById('registration-form');
+            const registerButton = document.getElementById('register-button');
+            const formMessage = document.getElementById('form-message');
+            
+            const menuScreen = document.getElementById('menu-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const playButton = document.getElementById('play-button');
+            const backButton = document.getElementById('back-button');
+            const spinButton = document.getElementById('spin-button');
+            const muteButton = document.getElementById('mute-button');
+            const muteIconOn = document.getElementById('mute-icon-on');
+            const muteIconOff = document.getElementById('mute-icon-off');
+
+            const outerArrow = document.querySelector('.outer-arrow');
+            const innerArrow = document.querySelector('.inner-arrow');
+            const outerCircle = document.querySelector('.outer-circle');
+            const innerCircle = document.querySelector('.inner-circle');
+            const rouletteContainer = document.querySelector('.roulette-container');
+            const resultContainer = document.getElementById('result-container');
+
+            // --- LÓGICA DE REGISTRO Y NAVEGACIÓN ---
+            if (localStorage.getItem('twisterUserRegistered')) {
+                registrationScreen.classList.add('hidden');
+                menuScreen.classList.remove('hidden');
+                createMenuBackground();
+            } else {
+                registrationScreen.classList.remove('hidden');
+                menuScreen.classList.add('hidden');
+            }
+
+            registrationForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                registerButton.disabled = true;
+                registerButton.textContent = 'Registrando...';
+                formMessage.textContent = '';
+                
+                const formData = new FormData(registrationForm);
+                fetch(SCRIPT_URL, { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.result === 'success') {
+                            localStorage.setItem('twisterUserRegistered', 'true');
+                            registrationScreen.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                            registrationScreen.style.opacity = '0';
+                            registrationScreen.style.transform = 'scale(0.9)';
+                            setTimeout(() => {
+                                registrationScreen.classList.add('hidden');
+                                menuScreen.classList.remove('hidden');
+                                menuScreen.style.opacity = '0';
+                                menuScreen.style.transform = 'scale(0.9)';
+                                requestAnimationFrame(() => {
+                                    menuScreen.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                                    menuScreen.style.opacity = '1';
+                                    menuScreen.style.transform = 'scale(1)';
+                                });
+                                createMenuBackground();
+                                startAudio();
+                            }, 500);
+                        } else {
+                            throw new Error(data.error || 'Ocurrió un error desconocido.');
+                        }
+                    })
+                    .catch(error => {
+                        formMessage.textContent = `Error: ${error.message}`;
+                        formMessage.style.color = '#f87171';
+                        registerButton.disabled = false;
+                        registerButton.textContent = 'Registrarme y Jugar';
+                    });
+            });
+
+            playButton.addEventListener('click', () => {
+                startAudio();
+                menuScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+            });
+
+            backButton.addEventListener('click', () => {
+                gameScreen.classList.add('hidden');
+                menuScreen.classList.remove('hidden');
+            });
+
+            // --- LÓGICA DE AUDIO ---
+            let audioStarted = false;
+
+            // --- Nueva Música Divertida Estilo Arcade/Circo ---
+            const melodySynth = new Tone.FMSynth({
+                harmonicity: 3, modulationIndex: 10,
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 }
+            }).toDestination();
+            melodySynth.volume.value = -10;
+
+            const bassSynth = new Tone.MonoSynth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 0.5 }
+            }).toDestination();
+            bassSynth.volume.value = -8;
+
+            const musicMelody = new Tone.Sequence((time, note) => {
+                melodySynth.triggerAttackRelease(note, "8n", time);
+            }, [
+                'C5', 'E5', 'G5', 'E5', 'C5', null, 'G4', null,
+                'D5', 'F5', 'A5', 'F5', 'D5', null, 'A4', null,
+                'E5', 'G5', 'B5', 'G5', 'E5', 'B4', 'C5', null,
+                'F4', 'A4', 'C5', 'A4', 'G4', 'F4', 'E4', 'D4'
+            ], '4n');
+
+            const bassLine = new Tone.Sequence((time, note) => {
+                bassSynth.triggerAttackRelease(note, "8n", time);
+            }, [
+                'C3', 'G3', 'C3', 'G3', 'G3', 'D3', 'G3', 'D3',
+                'A3', 'E3', 'A3', 'E3', 'F3', 'C3', 'G3', 'C3',
+            ], '4n');
+            
+            Tone.Transport.bpm.value = 135;
+
+            // --- Sonidos de la Ruleta ---
+            const winSound = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.1, release: 1 }, }).toDestination();
+            winSound.volume.value = -5;
+            
+            const spinSynth = new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.05, release: 0.1 } }).toDestination();
+            spinSynth.volume.value = -15;
+
+            const spinSoundEffect = new Tone.Sequence((time, note) => {
+                spinSynth.triggerAttackRelease(note, '32n', time);
+            }, ['C4', 'E4', 'G4', 'C5', 'G4', 'E4'], '16n');
+            
+            async function startAudio() { 
+                if (!audioStarted && typeof Tone !== 'undefined' && Tone.context.state !== 'running') { 
+                    await Tone.start();
+                    musicMelody.start(0);
+                    bassLine.start(0); 
+                    Tone.Transport.start(); 
+                    audioStarted = true; 
+                } 
+            }
+            muteButton.addEventListener('click', () => { if(typeof Tone !== 'undefined'){ Tone.Destination.mute = !Tone.Destination.mute; muteIconOn.style.display = Tone.Destination.mute ? 'none' : 'block'; muteIconOff.style.display = Tone.Destination.mute ? 'block' : 'none'; }});
+
+            // --- LÓGICA DEL JUEGO (RESTO DEL CÓDIGO) ---
+            const bodyParts = [
+                { name: 'Mano Izquierda', iconUrl: 'https://images4.imagebam.com/3f/3b/a3/ME164JJ0_o.png' },
+                { name: 'Pie Izquierdo', iconUrl: 'https://images4.imagebam.com/89/de/db/ME164JHN_o.png' },
+                { name: 'Mano Derecha', iconUrl: 'https://images4.imagebam.com/3f/3b/a3/ME164JJ0_o.png', flipped: true },
+                { name: 'Pie Derecho', iconUrl: 'https://images4.imagebam.com/be/ac/80/ME164JF1_o.png' },
+            ];
+
+            const emojis = [
+                { name: 'Like', url: 'https://images4.imagebam.com/35/50/09/ME163LA0_o.png' },
+                { name: 'Corazón', url: 'https://images4.imagebam.com/d7/a2/9c/ME163LCW_o.png' },
+                { name: 'Sorprendido', url: 'https://images4.imagebam.com/96/e4/26/ME163LG8_o.png' },
+                { name: 'Sonriente', url: 'https://images4.imagebam.com/8e/fa/eb/ME163LKZ_o.png' },
+                { name: 'Enojado', url: 'https://images4.imagebam.com/27/2b/44/ME163LQL_o.png' },
+                { name: 'Triste', url: 'https://images4.imagebam.com/ee/8c/1f/ME163LUK_o.png' },
+            ];
+
+            let isSpinning = false;
+            let winningElements = { body: null, emoji: null };
+            let lastResult = null; // Para evitar resultados repetidos
+
+            function populateEmojis() { emojis.forEach((e,i)=>{const t=document.createElement("div");t.className="emoji-item";const n=360/emojis.length,o=i*n+n/2;t.style.transform=`rotate(${o}deg)`;const a=document.createElement("img");a.src=e.url,a.alt=e.name,a.style.transform=`translateX(-50%) rotate(-${o}deg)`,a.onerror=function(){this.src="https://placehold.co/60x60/f87171/ffffff?text=?"},t.appendChild(a),outerCircle.appendChild(t)}) }
+            
+            function spin() {
+                if(isSpinning) return;
+                isSpinning = true;
+                spinButton.disabled = true;
+                rouletteContainer.classList.add("glowing");
+                outerCircle.classList.add("spinning");
+                innerCircle.classList.add("spinning");
+                
+                spinSoundEffect.start();
+
+                outerArrow.style.transition="none";
+                innerArrow.style.transition="none";
+                outerArrow.style.transform="rotate(0deg)";
+                innerArrow.style.transform="rotate(0deg)";
+                outerArrow.offsetHeight;
+                outerArrow.style.transition="transform 5s cubic-bezier(0.22, 1, 0.36, 1)";
+                innerArrow.style.transition="transform 5s cubic-bezier(0.22, 1, 0.36, 1)";
+                
+                let randomBodyPartIndex, randomEmojiIndex;
+                
+                // Lógica para asegurar que el resultado no se repita
+                do {
+                    randomBodyPartIndex = Math.floor(Math.random() * bodyParts.length);
+                    randomEmojiIndex = Math.floor(Math.random() * emojis.length);
+                } while (lastResult && lastResult.body === bodyParts[randomBodyPartIndex].name && lastResult.emoji === emojis[randomEmojiIndex].name);
+                
+                lastResult = {
+                    body: bodyParts[randomBodyPartIndex].name,
+                    emoji: emojis[randomEmojiIndex].name
+                };
+
+                const spins = 15 + Math.floor(Math.random() * 10);
+                
+                const emojiSegmentSize = 360 / emojis.length;
+                const randomOffsetOuter = (Math.random() - 0.5) * emojiSegmentSize * 0.8;
+                const targetOuterAngle = (randomEmojiIndex * emojiSegmentSize) + (emojiSegmentSize / 2) + randomOffsetOuter;
+                let currentOuterRotation = (spins * 360) + targetOuterAngle;
+
+                const bodyPartSegmentSize = 90;
+                const randomOffsetInner = (Math.random() - 0.5) * bodyPartSegmentSize * 0.8;
+                const targetBodyPartAngle = (randomBodyPartIndex * bodyPartSegmentSize) + (bodyPartSegmentSize / 2) + randomOffsetInner;
+                let currentInnerRotation = ((spins + 3) * 360) + targetBodyPartAngle;
+                
+                setTimeout(()=>{
+                    outerArrow.style.transform=`rotate(${currentOuterRotation}deg)`;
+                    innerArrow.style.transform=`rotate(${currentInnerRotation}deg)`;
+                }, 10);
+                
+                setTimeout(()=>{
+                    rouletteContainer.classList.remove("glowing");
+                    outerCircle.classList.remove("spinning");
+                    innerCircle.classList.remove("spinning");
+                    
+                    spinSoundEffect.stop();
+                    winSound.triggerAttackRelease("C5","0.5s");
+
+                    const selectedBodyPart = bodyParts[randomBodyPartIndex];
+                    const selectedEmoji = emojis[randomEmojiIndex];
+
+                    winningElements.body=document.querySelector(`img[alt="${selectedBodyPart.name}"]`);
+                    winningElements.emoji=document.querySelector(`img[alt="${selectedEmoji.name}"]`);
+                    
+                    if(selectedBodyPart.flipped && !winningElements.body.classList.contains("flipped")) {
+                        winningElements.body = document.querySelector(`img[alt="${selectedBodyPart.name}"].flipped`);
+                    } else if (!selectedBodyPart.flipped && winningElements.body.classList.contains("flipped")) {
+                        winningElements.body = document.querySelector(`img[alt="${selectedBodyPart.name}"]:not(.flipped)`);
+                    }
+
+                    winningElements.body.style.opacity=0;
+                    winningElements.emoji.style.opacity=0;
+                    showResultAnimation(selectedBodyPart, selectedEmoji);
+                }, 5100);
+            }
+
+            function showResultAnimation(e,t){const n=winningElements.body.getBoundingClientRect(),o=winningElements.emoji.getBoundingClientRect(),a=document.createElement("img");a.src=e.iconUrl,a.className="result-image",e.flipped&&(a.style.transform="scaleX(-1)");const l=document.createElement("img");l.src=t.url,l.className="result-image",a.style.left=`${n.left}px`,a.style.top=`${n.top}px`,a.style.width=`${n.width}px`,a.style.height=`${n.height}px`,l.style.left=`${o.left}px`,l.style.top=`${o.top}px`,l.style.width=`${o.width}px`,l.style.height=`${o.height}px`;const r=document.createElement("div");r.className="result-text-container",r.innerHTML=`\n <h2 class="text-xl sm:text-4xl font-bold text-white" style="text-shadow: 0 2px 5px black;">${e.name} en ${t.name}</h2>\n <div id="close-result-button">&times;</div>\n `,resultContainer.innerHTML="",resultContainer.appendChild(a),resultContainer.appendChild(l),resultContainer.appendChild(r),void resultContainer.offsetWidth;const s=window.innerWidth/2,i=window.innerHeight/2;const imageSize = window.innerWidth < 640 ? 120 : 180; const gap = window.innerWidth < 640 ? 10 : 20;a.style.left=`${s-imageSize/2-gap}px`,a.style.top=`${i-imageSize/2}px`,a.style.width=`${imageSize}px`,a.style.height=`${imageSize}px`,e.flipped?a.style.transform="scaleX(-1) rotate(360deg)":a.style.transform="rotate(360deg)",l.style.left=`${s+gap}px`,l.style.top=`${i-imageSize/2}px`,l.style.width=`${imageSize}px`,l.style.height=`${imageSize}px`,l.style.transform="rotate(360deg)",r.style.opacity=1,r.style.transform="translateY(0)",document.getElementById("close-result-button").addEventListener("click",()=>{a.style.left=`${n.left}px`,a.style.top=`${n.top}px`,a.style.width=`${n.width}px`,a.style.height=`${n.height}px`,e.flipped?a.style.transform="scaleX(-1) rotate(0deg)":a.style.transform="rotate(0deg)",l.style.left=`${o.left}px`,l.style.top=`${o.top}px`,l.style.width=`${o.width}px`,l.style.height=`${o.height}px`,l.style.transform="rotate(0deg)",r.style.opacity=0,outerArrow.style.transition="transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",innerArrow.style.transition="transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",outerArrow.style.transform="rotate(0deg)",innerArrow.style.transform="rotate(0deg)",setTimeout(()=>{resultContainer.innerHTML="",winningElements.body&&(winningElements.body.style.opacity=1),winningElements.emoji&&(winningElements.emoji.style.opacity=1),isSpinning=!1,spinButton.disabled=!1},800)})}
+            
+            function createMenuBackground() { const e=["👍","❤️","💬","🔥","😂","💯","✨","🎉","📸","👀","🎵","⭐","💡","💎","📈","🔔","🔗","👥","✅","📢","📹","🤔","📊","📍","🎁","👑","😮","😊","😠","😢","😉","👏","👎","💔","✉️","👤","😍","🥳","🤯","😎","😜","😴","😭","😱","🤩"]; for(let t=0;t-18;t++){const n=document.createElement("div");n.classList.add("social-emoji"),n.innerText=e[Math.floor(Math.random()*e.length)];const o=15*Math.random()+15;n.style.animationDuration=`${o}s`;const a=15*Math.random();n.style.animationDelay=`${a}s`;switch(Math.floor(2*Math.random())+1){case 1:n.style.left="-150px",n.style.top=`${100*Math.random()}vh`,n.style.animationName="animate-from-left";break;case 2:n.style.left="calc(100vw + 150px)",n.style.top=`${100*Math.random()}vh`,n.style.animationName="animate-from-right"}n.style.fontSize=`${2*Math.random()+1.5}rem`,menuScreen.prepend(n)} }
+
+            populateEmojis();
+            spinButton.addEventListener('click', spin);
+        });
+    </script>
+</body>
+</html>
